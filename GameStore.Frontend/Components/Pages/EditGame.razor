@@ -1,0 +1,136 @@
+@page "/editgame"
+@page "/editgame/{id:int}"
+
+
+@inject NavigationManager NavigationManager
+@inject GamesClient GamesClient
+@inject GenresClient GenresClient
+
+<PageTitle>@title</PageTitle>
+<h3>New Game</h3>
+
+
+
+@if (genres is null || game is null)
+{
+    <p><em>Loading..</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm Model="@game" FormName="editGame" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText class="form-control" id="name" @bind-Value="@game.Name"/>
+                    <ValidationMessage For="@(() => game.Name)" />
+                </div>
+                <div class="mb-3">
+                    <label for="genre" class="form-label">Genre:</label>
+                    <InputSelect class="form-select" id="genre" @bind-Value="@game.GenreId">
+                        <option value="">Select a Genre</option>
+                        @foreach (var genre in genres)
+                        {
+                            <option value="@genre.Id">@genre.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => game.GenreId)" />
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber class="form-control" id="price" @bind-Value="@game.Price"/>
+                    <ValidationMessage For="@(() => game.Price)" />
+                </div>
+                <div class="mb-3">
+                    <label for="releaseDate" class="form-label">Release Date:</label>
+                    <InputDate class="form-control" id="releaseDate" @bind-Value="@game.ReleaseDate"/>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <a class="btn btn-secondary" href="/x" role="button">Cancel</a>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    
+    [Parameter]
+    public int? Id { get; set; }
+    
+    
+    [SupplyParameterFromForm]
+    private GameDetails? game { get; set; } 
+
+    private Genre[]? genres;
+// on parameterset is going to be invoked very first start when user starts entering the data but also the user sends the data to the server
+
+    private string title = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+
+        if (game is not null)
+        {
+            return;
+        }
+        if (Id is not null)
+        {
+            game = GamesClient.GetGame(Id.Value);
+            title = $"Edit {game.Name}";
+        }
+        else
+        {
+            game = new()
+            {
+                Name = string.Empty,
+                ReleaseDate = DateOnly.FromDateTime(DateTime.UtcNow),   
+            };
+            title = "New Game";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        genres = GenresClient.GetGenres();
+    }
+
+    private void HandleSubmit()
+    {
+        ArgumentNullException.ThrowIfNull(game);
+        GamesClient.AddGame(game);
+        NavigationManager.NavigateTo("/");
+    }
+
+    /*
+     * Let me explain how dependency injection is being used across these files for managing game data:
+       
+       In EditGame.razor:
+       @inject GamesClient GamesClient
+       
+       Copy
+       
+       Apply
+       
+       
+       The GamesClient is injected at the top of the component and used in the HandleSubmit() method to add new games via GamesClient.AddGame(game)
+       
+       In Home.razor:
+       @inject GamesClient Client
+       
+       Copy
+       
+       Apply
+       
+       
+       The same GamesClient is injected (with a different variable name) and used to fetch games via Client.GetGames() in the OnInitialized() method
+       
+       The GamesClient class maintains the state in memory through a private List and provides methods to:
+       Add new games (AddGame method)
+       Get all games (GetGames method)
+       When a new game is added through the EditGame form, the same GamesClient instance (thanks to dependency injection) updates the internal list, and when the user is redirected to Home, the updated list is displayed because both components are working with the same shared instance of GamesClient.
+       
+       This works because Blazor's dependency injection system ensures both components receive the same instance of GamesClient, allowing the data to persist between components and page navigations.
+     */
+}
