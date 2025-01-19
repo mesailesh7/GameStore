@@ -1,6 +1,6 @@
 @page "/editgame"
 @page "/editgame/{id:int}"
-
+@rendermode InteractiveServer
 
 @inject NavigationManager NavigationManager
 @inject GamesClient GamesClient
@@ -47,7 +47,7 @@ else
                     <InputDate class="form-control" id="releaseDate" @bind-Value="@game.ReleaseDate"/>
                 </div>
                 <button type="submit" class="btn btn-primary">Submit</button>
-                <a class="btn btn-secondary" href="/x" role="button">Cancel</a>
+                <a class="btn btn-secondary" href="/" role="button">Cancel</a>
             </EditForm>
         </div>
     </div>
