@@ -31,10 +31,10 @@ public class GamesClient
             ReleaseDate = new DateOnly(1992, 4, 21)
         }
     ];
+    public GameSummary[] GetGames() => games.ToArray();
 
     private readonly Genre[] genres = new GenresClient().GetGenres();
 
-    public GameSummary[] GetGames() => games.ToArray();
 
     public void AddGame(GameDetails game)
     {
